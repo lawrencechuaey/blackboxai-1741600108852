@@ -27,7 +27,8 @@ function addResource() {
     const resourcesList = document.getElementById('resourcesList');
     const resourceId = `resource-${resourceCounter}`;
     
-    const defaultResource = 'Developer';
+    const defaultResource = Object.keys(resources)[0];
+    const defaultLocation = Object.keys(resources[defaultResource])[0];
     const resourceHTML = `
         <div id="${resourceId}" class="p-4 border border-gray-200 rounded-lg">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -43,7 +44,7 @@ function addResource() {
                     <label class="block text-gray-700 text-sm font-medium mb-2">Location</label>
                     <select onchange="updateRate('${resourceId}')" class="resource-location w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         ${Object.keys(resources[defaultResource]).map(location => 
-                            `<option value="${location}">${location}</option>`
+                            `<option value="${location}" ${location === defaultLocation ? 'selected' : ''}>${location}</option>`
                         ).join('')}
                     </select>
                 </div>
@@ -75,16 +76,22 @@ function updateLocationOptions(resourceId) {
     const resourceElement = document.getElementById(resourceId);
     const resourceType = resourceElement.querySelector('.resource-type').value;
     const locationSelect = resourceElement.querySelector('.resource-location');
-    const currentLocations = Object.keys(resources[resourceType]);
     
-    // Update location options
-    locationSelect.innerHTML = `
-        <option value="" disabled>Select Location</option>
-        ${currentLocations.map(location => `<option value="${location}">${location}</option>`).join('')}
-    `;
+    // Reset location dropdown
+    locationSelect.innerHTML = '<option value="" disabled>Select Location</option>';
     
-    // Select first available location
-    locationSelect.value = currentLocations[0];
+    if (resourceType) {
+        // Add available locations
+        Object.keys(resources[resourceType]).forEach(location => {
+            const option = document.createElement('option');
+            option.value = location;
+            option.textContent = location;
+            locationSelect.appendChild(option);
+        });
+        
+        // Select the first available location
+        locationSelect.value = Object.keys(resources[resourceType])[0];
+    }
     
     updateRate(resourceId);
 }
@@ -93,9 +100,13 @@ function updateRate(resourceId) {
     const resourceElement = document.getElementById(resourceId);
     const resourceType = resourceElement.querySelector('.resource-type').value;
     const location = resourceElement.querySelector('.resource-location').value;
-    const rate = resources[resourceType][location];
     
-    resourceElement.querySelector('.daily-rate').textContent = `SGD ${rate.toFixed(2)}`;
+    if (resourceType && location && resources[resourceType] && resources[resourceType][location]) {
+        const rate = resources[resourceType][location];
+        resourceElement.querySelector('.daily-rate').textContent = `SGD ${rate.toFixed(2)}`;
+    } else {
+        resourceElement.querySelector('.daily-rate').textContent = 'SGD 0.00';
+    }
 }
 
 function removeResource(resourceId) {
