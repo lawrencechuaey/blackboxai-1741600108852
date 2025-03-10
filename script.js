@@ -33,6 +33,7 @@ function addResource() {
                 <div>
                     <label class="block text-gray-700 text-sm font-medium mb-2">Resource Type</label>
                     <select onchange="updateLocationOptions('${resourceId}')" class="resource-type w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Resource Type</option>
                         ${Object.keys(resources).map(resource => 
                             `<option value="${resource}">${resource}</option>`
                         ).join('')}
@@ -41,6 +42,7 @@ function addResource() {
                 <div>
                     <label class="block text-gray-700 text-sm font-medium mb-2">Location</label>
                     <select onchange="updateRate('${resourceId}')" class="resource-location w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Location</option>
                         ${Object.keys(resources['Developer']).map(location => 
                             `<option value="${location}">${location}</option>`
                         ).join('')}
@@ -74,16 +76,24 @@ function updateLocationOptions(resourceId) {
     const resourceElement = document.getElementById(resourceId);
     const resourceType = resourceElement.querySelector('.resource-type').value;
     const locationSelect = resourceElement.querySelector('.resource-location');
-    const currentLocations = Object.keys(resources[resourceType]);
     
-    // Update location options
-    locationSelect.innerHTML = currentLocations
-        .map(location => `<option value="${location}">${location}</option>`)
-        .join('');
+    // Clear and add default option
+    locationSelect.innerHTML = '<option value="">Select Location</option>';
     
-    // If current location is not available for new resource type, select first available location
-    if (!currentLocations.includes(locationSelect.value)) {
-        locationSelect.value = currentLocations[0];
+    if (resourceType) {
+        const currentLocations = Object.keys(resources[resourceType]);
+        // Add available locations
+        currentLocations.forEach(location => {
+            const option = document.createElement('option');
+            option.value = location;
+            option.textContent = location;
+            locationSelect.appendChild(option);
+        });
+        
+        // Select first location if none selected
+        if (!locationSelect.value && currentLocations.length > 0) {
+            locationSelect.value = currentLocations[0];
+        }
     }
     
     updateRate(resourceId);
@@ -93,9 +103,13 @@ function updateRate(resourceId) {
     const resourceElement = document.getElementById(resourceId);
     const resourceType = resourceElement.querySelector('.resource-type').value;
     const location = resourceElement.querySelector('.resource-location').value;
-    const rate = resources[resourceType][location];
     
-    resourceElement.querySelector('.daily-rate').textContent = `SGD ${rate.toFixed(2)}`;
+    if (resourceType && location && resources[resourceType] && resources[resourceType][location]) {
+        const rate = resources[resourceType][location];
+        resourceElement.querySelector('.daily-rate').textContent = `SGD ${rate.toFixed(2)}`;
+    } else {
+        resourceElement.querySelector('.daily-rate').textContent = 'SGD 0.00';
+    }
 }
 
 function removeResource(resourceId) {
