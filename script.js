@@ -27,23 +27,22 @@ function addResource() {
     const resourcesList = document.getElementById('resourcesList');
     const resourceId = `resource-${resourceCounter}`;
     
+    const defaultResource = 'Developer';
     const resourceHTML = `
         <div id="${resourceId}" class="p-4 border border-gray-200 rounded-lg">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-gray-700 text-sm font-medium mb-2">Resource Type</label>
                     <select onchange="updateLocationOptions('${resourceId}')" class="resource-type w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Select Resource Type</option>
                         ${Object.keys(resources).map(resource => 
-                            `<option value="${resource}">${resource}</option>`
+                            `<option value="${resource}" ${resource === defaultResource ? 'selected' : ''}>${resource}</option>`
                         ).join('')}
                     </select>
                 </div>
                 <div>
                     <label class="block text-gray-700 text-sm font-medium mb-2">Location</label>
                     <select onchange="updateRate('${resourceId}')" class="resource-location w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Select Location</option>
-                        ${Object.keys(resources['Developer']).map(location => 
+                        ${Object.keys(resources[defaultResource]).map(location => 
                             `<option value="${location}">${location}</option>`
                         ).join('')}
                     </select>
@@ -76,25 +75,16 @@ function updateLocationOptions(resourceId) {
     const resourceElement = document.getElementById(resourceId);
     const resourceType = resourceElement.querySelector('.resource-type').value;
     const locationSelect = resourceElement.querySelector('.resource-location');
+    const currentLocations = Object.keys(resources[resourceType]);
     
-    // Clear and add default option
-    locationSelect.innerHTML = '<option value="">Select Location</option>';
+    // Update location options
+    locationSelect.innerHTML = `
+        <option value="" disabled>Select Location</option>
+        ${currentLocations.map(location => `<option value="${location}">${location}</option>`).join('')}
+    `;
     
-    if (resourceType) {
-        const currentLocations = Object.keys(resources[resourceType]);
-        // Add available locations
-        currentLocations.forEach(location => {
-            const option = document.createElement('option');
-            option.value = location;
-            option.textContent = location;
-            locationSelect.appendChild(option);
-        });
-        
-        // Select first location if none selected
-        if (!locationSelect.value && currentLocations.length > 0) {
-            locationSelect.value = currentLocations[0];
-        }
-    }
+    // Select first available location
+    locationSelect.value = currentLocations[0];
     
     updateRate(resourceId);
 }
@@ -103,13 +93,9 @@ function updateRate(resourceId) {
     const resourceElement = document.getElementById(resourceId);
     const resourceType = resourceElement.querySelector('.resource-type').value;
     const location = resourceElement.querySelector('.resource-location').value;
+    const rate = resources[resourceType][location];
     
-    if (resourceType && location && resources[resourceType] && resources[resourceType][location]) {
-        const rate = resources[resourceType][location];
-        resourceElement.querySelector('.daily-rate').textContent = `SGD ${rate.toFixed(2)}`;
-    } else {
-        resourceElement.querySelector('.daily-rate').textContent = 'SGD 0.00';
-    }
+    resourceElement.querySelector('.daily-rate').textContent = `SGD ${rate.toFixed(2)}`;
 }
 
 function removeResource(resourceId) {
